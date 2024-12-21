@@ -1,0 +1,44 @@
+name: Deploy Sanity Studio (Development)
+
+on:
+  push:
+    branches:
+      - develop
+
+permissions:
+  contents: read
+
+env:
+  SANITY_ACTIVE_ENV: development
+  SANITY_AUTH_TOKEN: ${{ secrets.SANITY_AUTH_TOKEN }}
+  SANITY_STUDIO_PROJECT_ID: ${{ vars.SANITY_PROJECT_ID }}
+  HOSTNAME: ${{ vars.STUDIO_HOSTNAME }}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: Development
+      url: https://${{ steps.deploy.output.STUDIO_HOSTNAME}}.sanity.studio
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build and deploy Sanity Studio
+        id: deploy
+        run: |
+          npm run deploy -- --yes
+          echo "STUDIO_HOSTNAME=$SANITY_STUDIO_HOSTNAME" >> $GITHUB_ENV
