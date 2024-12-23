@@ -70,12 +70,9 @@ jobs:
           script: |
             const body = [
               '**🚀 Preview environment has been deployed!**',
-              '',
               `Visit [${process.env.STUDIO_URL}](${process.env.STUDIO_URL}) to see your changes.`,
-              '',
-              '',
               "*This is a temporary environment that will be undeployed when this PR is merged or closed.*"
-            ].join('\n')
+            ].join('\n\n')
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,
