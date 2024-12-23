@@ -45,15 +45,22 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Set PR hostname
-        if: github.event_name == 'pull_request'
+      - name: Set Studio hostname
         run: |
-          echo "SANITY_STUDIO_HOSTNAME=${HOSTNAME}-pr-${{ github.event.pull_request.number }}" >> $GITHUB_ENV
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            echo "SANITY_STUDIO_HOSTNAME=${HOSTNAME}-pr-${{ github.event.pull_request.number }}" >> $GITHUB_ENV
+          else
+            echo "SANITY_STUDIO_HOSTNAME=${HOSTNAME}" >> $GITHUB_ENV
+          fi
 
       - name: Build and deploy Sanity Studio
         id: deploy
         run: |
           npm run deploy -- --yes
+          if [ -z "${SANITY_STUDIO_HOSTNAME}" ]; then
+            echo "Error: SANITY_STUDIO_HOSTNAME is not set" >&2
+            exit 1
+          fi
           echo "STUDIO_URL=https://${SANITY_STUDIO_HOSTNAME}.sanity.studio" >> $GITHUB_OUTPUT
 
       - name: Post preview link
