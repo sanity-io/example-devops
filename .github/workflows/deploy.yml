@@ -14,9 +14,7 @@ permissions:
 
 env:
   SANITY_AUTH_TOKEN: ${{ secrets.SANITY_AUTH_TOKEN }}
-  # TODO: delete
   SANITY_STUDIO_PROJECT_ID: ${{ vars.SANITY_PROJECT_ID }}
-  # TODO: delete
   HOSTNAME: ${{ vars.STUDIO_HOSTNAME }}
 
 concurrency:
