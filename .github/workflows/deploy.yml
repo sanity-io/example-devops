@@ -25,6 +25,7 @@ concurrency:
 
 jobs:
   deploy:
+    name: Deploy
     runs-on: ubuntu-latest
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
 
@@ -33,17 +34,12 @@ jobs:
       url: ${{ steps.deploy.outputs.STUDIO_URL }}
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: lts/*
           cache: npm
-
-      - name: Install dependencies
-        run: npm ci
+      - run: npm ci
 
       - name: Set Studio hostname
         run: |
@@ -70,12 +66,9 @@ jobs:
           script: |
             const body = [
               '**🚀 Preview environment has been deployed!**',
-              '',
               `Visit [${process.env.STUDIO_URL}](${process.env.STUDIO_URL}) to see your changes.`,
-              '',
-              '',
               "*This is a temporary environment that will be undeployed when this PR is merged or closed.*"
-            ].join('\n')
+            ].join('\n\n')
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,
@@ -87,12 +80,13 @@ jobs:
           STUDIO_URL: ${{ steps.deploy.outputs.STUDIO_URL }}
 
   teardown:
+    name: Teardown
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
-    
+
     environment:
       name: Preview
-      
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
