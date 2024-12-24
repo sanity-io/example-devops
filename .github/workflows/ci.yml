@@ -61,24 +61,21 @@ jobs:
       - name: Validate Studio schema
         id: validate
         run: |
-          npm run validate:schema > ${{ env.SCHEMA_VALIDATION_REPORT }}
-          exit_code=$?
-          exit $exit_code
+          npx sanity schema validate >> ${{ env.SCHEMA_VALIDATION_REPORT }}
+          exit $?
 
       - name: Post schema validation report
         uses: actions/github-script@v6
-        if: always() && steps.validate.outcome == 'failure'
+        if: failure() && steps.validate.outcome == 'failure'
         with:
           script: |
             const fs = require('fs');
 
             const report = fs.readFileSync('${{ env.SCHEMA_VALIDATION_REPORT }}', 'utf8');
             const body = [
-                '### ❌ Schema validation failed',
+                '### ❌ Studio schema validation failed',
                 '',
-                '```',
-                report,
-                '```'
+                `\`\`\`${report}\`\`\``,
             ].join('\n');
 
             await github.rest.issues.createComment({

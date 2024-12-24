@@ -12,8 +12,7 @@
     "deploy-graphql": "sanity graphql deploy",
     "format": "prettier --cache --write .",
     "lint": "eslint --cache --cache-location node_modules/.cache/eslint/.eslintcache .",
-    "typecheck": "tsc --noEmit",
-    "validate:schema": "sanity schema validate"
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [
     "sanity"
