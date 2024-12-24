@@ -24,11 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          cache: npm
-          node-version: lts/*
-      - run: npm ci
+      - uses: ./.github/actions/setup
 
       - name: Typecheck
         run: npm run typecheck
@@ -38,11 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          cache: npm
-          node-version: lts/*
-      - run: npm ci
+      - uses: ./.github/actions/setup
 
       - name: Lint
         run: npm run lint -- --max-warnings 0
@@ -52,11 +44,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          cache: npm
-          node-version: lts/*
-      - run: npm ci
+      - uses: ./.github/actions/setup
 
       - name: Validate Studio schema
         id: validate

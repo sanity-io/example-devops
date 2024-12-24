@@ -1,0 +1,13 @@
+name: Setup Node.js Environment
+description: Sets up Node.js environment with caching and dependency installation
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 'lts/*'
+        cache: 'npm'
+        
+    - run: npm ci
+      shell: bash
