@@ -63,7 +63,14 @@ jobs:
         id: validate
         run: |
           npx sanity schema validate >> ${{ env.SCHEMA_VALIDATION_REPORT }}
-          exit $?
+          exit_code=$?
+          {
+            echo "## Schema Validation Results"
+            echo "\`\`\`"
+            cat ${{ env.SCHEMA_VALIDATION_REPORT }}
+            echo "\`\`\`"
+          } >> $GITHUB_STEP_SUMMARY
+          exit $exit_code
 
       - name: Post schema validation report
         uses: actions/github-script@v6
@@ -71,10 +78,9 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-
             const report = fs.readFileSync('${{ env.SCHEMA_VALIDATION_REPORT }}', 'utf8');
             const body = [
-                '### ❌ Studio schema validation failed',
+                '### ❌ Schema validation failed',
                 '',
                 `\`\`\`${report}\`\`\``,
             ].join('\n');
@@ -103,7 +109,14 @@ jobs:
         id: validate
         run: |
           npx sanity documents validate >> ${{ env.DATASET_VALIDATION_REPORT }}
-          exit $?
+          exit_code=$?
+          {
+            echo "## Dataset Validation Results"
+            echo "\`\`\`"
+            cat ${{ env.DATASET_VALIDATION_REPORT }}
+            echo "\`\`\`"
+          } >> $GITHUB_STEP_SUMMARY
+          exit $exit_code
 
       - name: Post dataset validation report
         if: failure() && steps.validate.outcome == 'failure'
