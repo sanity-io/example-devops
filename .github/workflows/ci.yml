@@ -16,7 +16,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  SCHEMA_VALIDATION_REPORT: report.txt
+  SCHEMA_VALIDATION_REPORT: schema-report.txt
+  DATASET_VALIDATION_REPORT: dataset-report.txt
 
 jobs:
   typecheck:
@@ -62,7 +63,14 @@ jobs:
         id: validate
         run: |
           npx sanity schema validate >> ${{ env.SCHEMA_VALIDATION_REPORT }}
-          exit $?
+          exit_code=$?
+          {
+            echo "## Schema Validation Results"
+            echo "\`\`\`"
+            cat ${{ env.SCHEMA_VALIDATION_REPORT }}
+            echo "\`\`\`"
+          } >> $GITHUB_STEP_SUMMARY
+          exit $exit_code
 
       - name: Post schema validation report
         uses: actions/github-script@v6
@@ -70,10 +78,9 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-
             const report = fs.readFileSync('${{ env.SCHEMA_VALIDATION_REPORT }}', 'utf8');
             const body = [
-                '### ❌ Studio schema validation failed',
+                '### ❌ Schema validation failed',
                 '',
                 `\`\`\`${report}\`\`\``,
             ].join('\n');
@@ -83,4 +90,55 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 body,
+            });
+
+  validate-dataset:
+    name: Validate dataset
+    runs-on: ubuntu-latest
+    if: (github.event_name == 'pull_request' && github.base_ref == 'main') || (github.ref == 'refs/heads/main')
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          cache: npm
+          node-version: lts/*
+      - run: npm ci
+
+      - name: Validate dataset
+        id: validate
+        run: |
+          npx sanity documents validate --yes --level info >> ${{ env.DATASET_VALIDATION_REPORT }}
+          exit_code=$?
+          {
+            echo "## Dataset Validation Results"
+            echo "\`\`\`"
+            cat ${{ env.DATASET_VALIDATION_REPORT }}
+            echo "\`\`\`"
+          } >> $GITHUB_STEP_SUMMARY
+          exit $exit_code
+        env:
+          SANITY_ACTIVE_ENV: production
+          SANITY_AUTH_TOKEN: ${{ secrets.SANITY_AUTH_TOKEN }}
+          # TODO: delete
+          SANITY_STUDIO_PROJECT_ID: ${{ vars.SANITY_PROJECT_ID }}
+
+      - name: Post dataset validation report
+        if: failure() && steps.validate.outcome == 'failure'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs'); 
+            const report = fs.readFileSync('${{ env.DATASET_VALIDATION_REPORT }}', 'utf8');
+            const body = [
+                '### ❌ Dataset validation failed',
+                '',
+                `\`\`\`${report}\`\`\``,
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
             });
