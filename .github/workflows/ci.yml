@@ -16,6 +16,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  SANITY_AUTH_TOKEN: ${{ secrets.SANITY_AUTH_TOKEN }}
+  # TODO: delete
+  SANITY_STUDIO_PROJECT_ID: ${{ vars.SANITY_PROJECT_ID }}
   SCHEMA_VALIDATION_REPORT: schema-report.txt
   DATASET_VALIDATION_REPORT: dataset-report.txt
 
@@ -108,7 +111,7 @@ jobs:
       - name: Validate dataset
         id: validate
         run: |
-          npx sanity documents validate >> ${{ env.DATASET_VALIDATION_REPORT }}
+          npx sanity documents validate --yes --level info >> ${{ env.DATASET_VALIDATION_REPORT }}
           exit_code=$?
           {
             echo "## Dataset Validation Results"
@@ -123,6 +126,7 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
+            const fs = require('fs'); 
             const report = fs.readFileSync('${{ env.DATASET_VALIDATION_REPORT }}', 'utf8');
             const body = [
                 '### ❌ Dataset validation failed',
