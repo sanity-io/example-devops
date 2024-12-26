@@ -16,7 +16,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  SCHEMA_VALIDATION_REPORT: report.txt
+  SCHEMA_VALIDATION_REPORT: schema-report.txt
+  DATASET_VALIDATION_REPORT: dataset-report.txt
 
 jobs:
   typecheck:
@@ -83,4 +84,42 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 body,
+            });
+
+  validate-dataset:
+    name: Validate dataset
+    runs-on: ubuntu-latest
+    if: (github.event_name == 'pull_request' && github.base_ref == 'main') || (github.ref == 'refs/heads/main')
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          cache: npm
+          node-version: lts/*
+      - run: npm ci
+
+      - name: Validate dataset
+        id: validate
+        run: |
+          npx sanity documents validate >> ${{ env.DATASET_VALIDATION_REPORT }}
+          exit $?
+
+      - name: Post dataset validation report
+        if: failure() && steps.validate.outcome == 'failure'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const report = fs.readFileSync('${{ env.DATASET_VALIDATION_REPORT }}', 'utf8');
+            const body = [
+                '### ❌ Dataset validation failed',
+                '',
+                `\`\`\`${report}\`\`\``,
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
             });
