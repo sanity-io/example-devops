@@ -16,9 +16,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  SANITY_AUTH_TOKEN: ${{ secrets.SANITY_AUTH_TOKEN }}
-  # TODO: delete
-  SANITY_STUDIO_PROJECT_ID: ${{ vars.SANITY_PROJECT_ID }}
   SCHEMA_VALIDATION_REPORT: schema-report.txt
   DATASET_VALIDATION_REPORT: dataset-report.txt
 
@@ -120,6 +117,11 @@ jobs:
             echo "\`\`\`"
           } >> $GITHUB_STEP_SUMMARY
           exit $exit_code
+        env:
+          SANITY_ACTIVE_ENV: production
+          SANITY_AUTH_TOKEN: ${{ secrets.SANITY_AUTH_TOKEN }}
+          # TODO: delete
+          SANITY_STUDIO_PROJECT_ID: ${{ vars.SANITY_PROJECT_ID }}
 
       - name: Post dataset validation report
         if: failure() && steps.validate.outcome == 'failure'
