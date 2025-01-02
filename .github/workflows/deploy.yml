@@ -52,11 +52,17 @@ jobs:
       - name: Build and deploy Sanity Studio
         id: deploy
         run: |
-          npm run deploy -- --yes
           if [ -z "${SANITY_STUDIO_HOSTNAME}" ]; then
             echo "Error: SANITY_STUDIO_HOSTNAME is not set" >&2
             exit 1
           fi
+
+          if [[ "$SANITY_ACTIVE_ENV" == "development" ]]; then
+            npm run deploy -- --yes --source-maps
+          else
+            npm run deploy -- --yes
+          fi
+
           echo "STUDIO_URL=https://${SANITY_STUDIO_HOSTNAME}.sanity.studio" >> $GITHUB_OUTPUT
 
       - name: Post preview link
